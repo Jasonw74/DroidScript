@@ -1,4 +1,4 @@
-﻿//
+//
 // DroidScript Main Application
 //
 // Copyright droidscript.org
@@ -32,6 +32,7 @@ var headless=false,useAce=false,txtDebug=null,forceOrient="",noGUI=false;
 var useDarkTheme=false, usingAce=false;
 var lastCursorPos = [], curProgTitle=null;
 var espruino=null, term=null, webAce=null;
+var useAccessibility = false;
 
 //Called when application is started.
 function OnStart()
@@ -57,6 +58,7 @@ function OnStart()
     //Load settings.
     headless = (isChrome || isRemix || isThings);
 	textSize = app.LoadNumber( "TextSize", defTextSize ); 
+	useAccessibility = app.LoadBoolean("useAccessibility");
 	useADB = app.LoadBoolean( "UseADB" );
 	useSoftKeys = app.LoadBoolean( "UseSoftKeys", headless?false:true );
 	useYoyo = app.LoadBoolean( "UseYoyo", headless?false:true );
@@ -79,6 +81,7 @@ function OnStart()
 		{
 			var conFile = app.ReadFile( configFile );
 			var config = JSON.parse( conFile ); 
+			if( config.useAccessibility!=null ) useAccesibility = config.useAccessibility;
 			if( config.useADB!=null ) useADB = config.useADB;
 			if( config.useSoftKeys!=null ) useSoftKeys = config.useSoftKeys;
 			if( config.useYoyo!=null ) useYoyo = config.useYoyo;
@@ -717,13 +720,13 @@ function CreateLayout()
     layBar = app.CreateLayout( "Linear", "horizontal,vcenter,fillx" );    
     layBar.SetBackground( "/res/drawable/bar_gray" );
     layBar.SetSize( -1, topBarHeight );
-    btnDocs = app.CreateButton( "[fa-book]", (tablet?0.16:0.23), (tablet?0.038:0.04), "bar-gray,fontawesome" );
+    btnDocs = app.CreateButton( useAccessibility? "Docs" :"[fa-book]", (tablet?0.16:0.23), (tablet?0.038:0.04), "bar-gray,fontawesome" );
     btnDocs.SetOnTouch( btnDocs_OnTouch );
     btnDocs.SetTextSize("16", "dip");
     btnDocs.SetTextColor("#dddddd");
     layBar.AddChild( btnDocs );
     
-    btnConnect = app.CreateButton( "[fa-wifi]", (tablet?0.16:0.23), (tablet?0.038:0.04), "bar-gray,fontawesome" );
+    btnConnect = app.CreateButton( useAccessibility? "Connect": "[fa-wifi]", (tablet?0.16:0.23), (tablet?0.038:0.04), "bar-gray,fontawesome" );
     //btnConnect.SetSize( (tablet?0.08:0.13), (tablet?0.040:0.056) );
     btnConnect.SetOnTouch( btnConnect_OnTouch );
     btnConnect.SetMargins(0.02,0,0,0);
@@ -734,7 +737,7 @@ function CreateLayout()
 
     //imgTitle = app.CreateImage( "/assets/Img/AScript.png", (tablet?0.052:0.07), (lowRes?0.05:(tablet?0.033:0.039)), "" );
     //layBar.AddChild( imgTitle );
-    btnFiles = app.CreateButton( "", (tablet?0.08:0.13), (tablet?0.040:0.055), "bar-gray,singleline" );
+    btnFiles = app.CreateButton( useAccessibility? "Files" : "", (tablet?0.08:0.13), (tablet?0.040:0.055), "bar-gray,singleline" );
     //btnFiles.SetSize( (tablet?0.16:0.26), (tablet?0.040:0.056) );
     btnFiles.SetOnTouch( btnFiles_OnTouch );
     btnFiles.SetMargins(0.04,0,0.04,0);
@@ -745,7 +748,7 @@ function CreateLayout()
     btnFiles.Hide();
     layBar.AddChild( btnFiles );
     
-    btnMenu = app.CreateButton( "[fa-ellipsis-v]", (tablet?0.08:0.13), (tablet?0.040:0.055), "bar-gray,fontawesome" );
+    btnMenu = app.CreateButton( useAccessibility? "Menu" : "[fa-ellipsis-v]", (tablet?0.08:0.13), (tablet?0.040:0.055), "bar-gray,fontawesome" );
     //btnMenu.SetSize( (tablet?0.08:0.13), (tablet?0.040:0.056) );
     btnMenu.SetOnTouch( btnMenu_OnTouch );
     btnMenu.SetMargins(0,0,0.02,0);
@@ -754,7 +757,7 @@ function CreateLayout()
     //btnMenu.SetPadding(0,0,0,0.014);
     layBar.AddChild( btnMenu );
     
-    btnSamp = app.CreateButton( "[fa-rocket]", (tablet?0.16:0.23), (tablet?0.038:0.04), "bar-gray,fontawesome" );
+    btnSamp = app.CreateButton( useAccessibility? "Samples" : "[fa-rocket]", (tablet?0.16:0.23), (tablet?0.038:0.04), "bar-gray,fontawesome" );
     btnSamp.SetOnTouch( btnSamp_OnTouch );
     btnSamp.SetTextSize("16", "dip");
     btnSamp.SetTextColor("#dddddd");
@@ -768,8 +771,12 @@ function CreateLayout()
     //Create TextEdit control to edit code (invisible at first).
     layEdit = app.CreateLayout( "Linear", "Vertical,FillXY" );
     layEdit.SetVisibility( "Hide" );
-    edit = app.CreateCodeEdit( "", 1.0, (lowRes?0.83:(tablet?0.88:0.86)), "" );
-    if( useDarkTheme ) edit.SetColorScheme( "Dark" );
+    if (useAccessibility) {
+     edit = app.CreateText( "", 1.0, (lowRes?0.83:(tablet?0.88:0.86)), "MultiLine" );
+    } else {
+     edit = app.CreateCodeEdit( "", 1.0, (lowRes?0.83:(tablet?0.88:0.86)), "" );
+     if( useDarkTheme ) edit.SetColorScheme( "Dark" );
+    } //if useAccessibility
     edit.SetTextSize( textSize );
     edit.SetPadding( 0.02,0,0,0 ); 
     edit.SetOnChange( edit_OnChange );
@@ -785,36 +792,36 @@ function CreateLayout()
     layEditBtns.SetBackColor( "#ff777777" );
     layEditBtns.SetSize( 1.0, bottomBarHeight);
     
-    btnUndo = app.CreateButton( "[fa-undo]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnUndo = app.CreateButton( useAccessibility? "Undo" : "[fa-undo]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
     btnUndo.SetOnTouch( btnUndo_OnTouch );
     btnUndo.SetTextSize( 14, "pl");
     layEditBtns.AddChild( btnUndo );
     
-    btnNew = app.CreateButton( "[fa-file-text]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnNew = app.CreateButton( useAccessibility? "New" : "[fa-file-text]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
     btnNew.SetMargins( 0.03,0,0,0 );
     btnNew.SetOnTouch( btnNew_OnTouch );
     btnNew.SetTextSize( 14, "pl");
     layEditBtns.AddChild( btnNew );
     
-    btnAsset = app.CreateButton( "[fa-picture-o]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnAsset = app.CreateButton( useAccessibility? "Asset" : "[fa-picture-o]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
     btnAsset.SetMargins( 0.03,0,0,0 );
     btnAsset.SetOnTouch( btnAsset_OnTouch );
     btnAsset.SetTextSize( 14, "pl");
     layEditBtns.AddChild( btnAsset );
     
-    btnDbg = app.CreateButton( "[fa-bug]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnDbg = app.CreateButton( useAccessibility? "Debug" : "[fa-bug]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
     btnDbg.SetMargins( 0.03,0,0.03,0 );
     btnDbg.SetTextSize( 14, "pl");
     btnDbg.SetOnTouch( btnDbg_OnTouch );
     layEditBtns.AddChild( btnDbg );
     
-    btnExec = app.CreateButton( "[fa-play]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnExec = app.CreateButton( useAccessibility? "Run" : "[fa-play]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
     btnExec.SetMargins( 0,0,0.03,0 );
     btnExec.SetTextSize( 14, "pl");
     btnExec.SetOnTouch( btnExec_OnTouch );
     layEditBtns.AddChild( btnExec );
    
-    btnRedo = app.CreateButton( "[fa-repeat]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnRedo = app.CreateButton( useAccessibility? "Redo" : "[fa-repeat]", 0.14, (tablet?0.04:0.06), "gray,fontawesome" );
     btnRedo.SetOnTouch( btnRedo_OnTouch );
     btnRedo.SetTextSize( 14, "pl");
     layEditBtns.AddChild( btnRedo );
@@ -915,14 +922,14 @@ function CreateLayout()
     //layBtns.AddChild( btnZoomOut );
     
     //Create button to copy sample.
-    btnCopy = app.CreateButton( "[fa-copy]", 0.26, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnCopy = app.CreateButton( useAccessibility? "Copy" : "[fa-copy]", 0.26, (tablet?0.04:0.06), "gray,fontawesome" );
     btnCopy.SetMargins( 0.08,0,0.08,0 );
     btnCopy.SetTextSize( 14, "pl");
     btnCopy.SetOnTouch( btnCopy_OnTouch );
     layBtns.AddChild( btnCopy );
     
     //Create button to launch sample.
-    btnRun = app.CreateButton( "[fa-play]", 0.26, (tablet?0.04:0.06), "gray,fontawesome" );
+    btnRun = app.CreateButton( useAccessibility? "Run" : "[fa-play]", 0.26, (tablet?0.04:0.06), "gray,fontawesome" );
     btnRun.SetMargins( 0.08,0,0.08,0 );
     btnRun.SetTextSize( 14, "pl");
     btnRun.SetOnTouch( btnRun_OnTouch );
@@ -2103,7 +2110,16 @@ function ShowSettings()
     edtSetPass.SetMargins( 0.01,0.01,0,0 )
     edtSetName.SetHint( "Password" );
     layHoriz.AddChild( edtSetPass );
-  
+	
+	//Create horizontal layout.
+	var layHoriz = app.CreateLayout( "linear", "horizontal,center,vcenter" );
+	laySet.AddChild( layHoriz );
+	
+	//Create Accessibility checkbox.
+	chkSetAccessibility = app.CreateCheckBox( T("Use")+" Accessibility (Needs Restart)" );
+	chkSetAccessibility.SetMargins( 0, 0.04, 0, 0 );
+	layHoriz.AddChild( chkSetAccessibility );
+	
     //Create OK and Cancel buttons.
     laySet3 = app.CreateLayout( "linear", "horizontal,fillxy,center" );
     laySet3.SetMargins( 0, 0.03, 0, 0.01 );  
@@ -2166,6 +2182,8 @@ function btnSetOK_OnTouch()
 	app.SaveBoolean( "UsePass", usePass );
 	password = edtSetPass.GetText();
 	app.SaveText( "Password", password );
+	useAccessibility = chkSetAccessibility.GetChecked();
+	app.SaveBoolean( "UseAccessibility", useAccessibility );
 	
     //Remove dialog and relist apps.
     dlgSet.Dismiss();
